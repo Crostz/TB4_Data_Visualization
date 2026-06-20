@@ -2,6 +2,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+# Paletas seleccionadas en ColorBrewer 2 con el filtro color-blind safe.
+PALETA_SECUENCIAL = ["#e5f5f9", "#99d8c9", "#2ca25f"]  # BuGn
+PALETA_DIVERGENTE = ["#af8dc3", "#f7f7f7", "#7fbf7b"]  # PRGn
+
+# P9 contiene cuatro países; por eso se usa Paired con cuatro clases.
+PALETA_CUALITATIVA = ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"]  # Paired
+
 # ==================================================
 # CONFIGURACIÓN
 # ==================================================
@@ -100,7 +107,7 @@ with col1:
             orientation="h",
             text="Incremento",
             color="Incremento",
-            color_continuous_scale="Greens"
+            color_continuous_scale=PALETA_SECUENCIAL
         )
 
         fig1.update_traces(
@@ -389,15 +396,16 @@ if 2000 in pivot_ci.columns and 2020 in pivot_ci.columns:
         x="delta",
         y="country",
         orientation="h",
-        color="direction",
-        color_discrete_map={"Mejoró ↓": "#1a9850", "Empeoró ↑": "#d73027"},
+        color="delta",
+        color_continuous_scale=PALETA_DIVERGENTE[::-1],
+        color_continuous_midpoint=0,
         text="delta",
         hover_data={
             "country": True,
             "delta": ":.2f",
             "ci_2000": ":.2f",   # ← ahora sí existe
             "ci_2020": ":.2f",   # ← ahora sí existe
-            "direction": False,
+            "direction": True,
         },
         labels={"delta": "Δ Intensidad de carbono (gCO₂/kWh)", "country": ""},
     )
@@ -406,7 +414,7 @@ if 2000 in pivot_ci.columns and 2020 in pivot_ci.columns:
     fig7.update_layout(
         xaxis_title="Cambio en intensidad de carbono (gCO₂/kWh) — negativo = mejora",
         yaxis=dict(categoryorder="total ascending"),
-        legend_title="Dirección",
+        coloraxis_colorbar=dict(title="Cambio"),
         height=600,
         shapes=[dict(
             type="line", x0=0, x1=0, y0=-0.5, y1=len(pivot_ci) - 0.5,
@@ -537,10 +545,16 @@ st.subheader("📈 P9 · Trayectoria de Perú en consumo de energía per cápita
 
 P9_COUNTRIES = ["Peru", "Chile", "Colombia", "Brazil"]
 P9_COLORS = {
-    "Peru": "#d6604d",
-    "Chile": "#4393c3",
-    "Colombia": "#74add1",
-    "Brazil": "#8073ac",
+    "Peru": PALETA_CUALITATIVA[1],
+    "Chile": PALETA_CUALITATIVA[0],
+    "Colombia": PALETA_CUALITATIVA[2],
+    "Brazil": PALETA_CUALITATIVA[3],
+}
+P9_DASHES = {
+    "Peru": "solid",
+    "Chile": "dash",
+    "Colombia": "dot",
+    "Brazil": "dashdot",
 }
 
 df_p9 = (
@@ -577,9 +591,15 @@ else:
     # Destacar Perú frente a los tres países de comparación.
     for trace in fig9.data:
         if trace.name == "Peru":
-            trace.update(line=dict(width=4), marker=dict(size=8))
+            trace.update(
+                line=dict(width=4, dash=P9_DASHES[trace.name]),
+                marker=dict(size=8),
+            )
         else:
-            trace.update(line=dict(width=2), marker=dict(size=6))
+            trace.update(
+                line=dict(width=2, dash=P9_DASHES[trace.name]),
+                marker=dict(size=6),
+            )
 
     fig9.update_traces(
         hovertemplate=(
@@ -641,9 +661,10 @@ st.markdown(
 
     El *encoding* visual principal es la posición horizontal, que representa el año, y
     la posición vertical, que representa el consumo de energía per cápita en kWh. El
-    color diferencia a cada país y el grosor mayor de la línea roja resalta a Perú,
-    que es el caso de interés. Los marcadores muestran las observaciones anuales y la
-    línea las conecta en orden temporal. Usar una medida per cápita es imporante porque
+    color y el patrón de línea diferencian a cada país, mientras que el mayor grosor y
+    el trazo continuo resaltan a Perú, que es el caso de interés. Los marcadores muestran
+    las observaciones anuales y la línea las conecta en orden temporal. Usar una medida
+    per cápita es importante porque
     permite una comparación más justa entre países con poblaciones de tamaños muy distintos.
 
     La principal limitación es que, si se añadieran muchas más series, las líneas y
