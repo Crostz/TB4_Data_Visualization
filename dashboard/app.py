@@ -156,6 +156,109 @@ with col2:
 
 st.divider()
 
+# ==================================================
+# GRÁFICO 3 — Acceso a electricidad vs. Combustibles fósiles (Dinámico)
+# ==================================================
+st.subheader("📊 P3 ·Riqueza vs. renovables")
+
+años_disponibles = sorted(df["year"].unique())
+
+if not años_disponibles:
+    st.warning("No hay años disponibles en el rango seleccionado en el panel izquierdo.")
+else:
+
+    year_seleccionado3 = st.slider(
+        "Selecciona el año para este análisis:",
+        min_value=min(años_disponibles),
+        max_value=max(años_disponibles),
+        value=max(años_disponibles)  
+    )
+
+
+    df_year = df[df["year"] == year_seleccionado3].copy()
+    
+
+    fig_scatter3 = px.scatter(
+        df_year,
+        x="gdp_per_capita",
+        y="renewable_share_of_total_energy",
+        hover_name="country",
+        hover_data={"year": False},
+        labels={
+            "gdp_per_capita": "PIB per cápita",
+            "renewable_share_of_total_energy": "Participación en energías renovables (%)"
+        },
+        title=f"¿Existe una relación entre el PIB per cápita de un país y su participación de energías renovables? ({year_seleccionado3})"
+    )
+    
+
+    fig_scatter3.update_layout(
+        height=500,
+        hovermode="closest"
+    )
+    
+
+    st.plotly_chart(fig_scatter3, use_container_width=True)
+
+st.divider()
+
+# ==================================================
+# GRÁFICO 4 — Acceso a electricidad vs. Combustibles fósiles (Dinámico)
+# ==================================================
+st.subheader("📊 P4 ·Pobreza energética y fósiles")
+
+# 1. Obtener la lista de años disponibles según los filtros del Sidebar
+años_disponibles = sorted(df["year"].unique())
+
+if not años_disponibles:
+    st.warning("No hay años disponibles en el rango seleccionado en el panel izquierdo.")
+else:
+
+    year_seleccionado = st.slider(
+        "Selecciona el año:",
+        min_value=min(años_disponibles),
+        max_value=max(años_disponibles),
+        value=max(años_disponibles) 
+    )
+
+    # 3. Filtrar por el año seleccionado por el usuario
+    df_year = df[df["year"] == year_seleccionado].copy()
+    
+    # Filtrar países con las condiciones específicas para el cálculo
+    df_elec = df_year[
+        (df_year["access_to_electricity"] < 50) & 
+        (df_year["fossil_fuel_consumption"] > 300)
+    ]
+    
+    # 4. Crear el gráfico interactivo con Plotly Express
+    fig_scatter = px.scatter(
+        df_year,
+        x="fossil_fuel_consumption",
+        y="access_to_electricity",
+        hover_name="country",  # Muestra el nombre del país al pasar el cursor
+        hover_data={"year": False},
+        labels={
+            "fossil_fuel_consumption": "Consumo de combustibles fósiles",
+            "access_to_electricity": "Acceso a la electricidad (%)"
+        },
+        title=f"Acceso a electricidad vs. Dependencia de combustibles fósiles ({year_seleccionado})"
+    )
+    
+    # Ajustes de diseño
+    fig_scatter.update_layout(
+        height=500,
+        hovermode="closest"
+    )
+    
+    # 5. Mostrar el gráfico en Streamlit
+    st.plotly_chart(fig_scatter, use_container_width=True)
+    
+    # 6. Mostrar la métrica del conteo de países de forma dinámica
+    st.metric(
+        label=f"Cantidad de países con acceso < 50% y combustibles fósiles > 300 en el año {year_seleccionado}", 
+        value=len(df_elec)
+    )
+st.divider()
 
 # ==================================================
 # GRÁFICO 7 — América Latina: intensidad de carbono
